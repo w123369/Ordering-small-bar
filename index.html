@@ -532,7 +532,7 @@
 <script>
 /* ================= 数据 ================= */
 const STORE_KEY = "diancaiben_v1";
-const DEFAULT_MENU_VERSION = 4; // 每次改动默认菜单就 +1，老用户刷新后自动同步增删
+const DEFAULT_MENU_VERSION = 5; // 每次改动默认菜单就 +1，老用户刷新后自动同步增删
 let state = {
   dishes: [],
   cart: {},          // id -> qty
@@ -543,29 +543,29 @@ let state = {
 
 function defaultDishes() {
   return [
-    { id: 1, name: "番茄炒蛋", category: "家常菜", price: 12, tag: "❤️ TA的最爱", note: "" },
-    { id: 2, name: "麻辣香锅", category: "家常菜", price: 45, tag: "🌶️ 重辣", note: "微辣版本更好吃" },
-    { id: 3, name: "白米饭", category: "主食", price: 2, tag: "", note: "" },
-    { id: 4, name: "杨枝甘露", category: "甜品饮品", price: 16, tag: "", note: "" },
-    { id: 5, name: "小馄饨", category: "主食", price: 10, tag: "🥗 清淡", note: "楼下那家" },
-    { id: 6, name: "薯条", category: "小吃", price: 9, tag: "✨ 想尝尝", note: "" },
-    { id: 7, name: "红烧肉", category: "家常菜", price: 38, tag: "❤️ TA的最爱", note: "肥而不腻那种" },
-    { id: 8, name: "酸菜鱼", category: "家常菜", price: 52, tag: "🔥 微辣", note: "" },
-    { id: 9, name: "可乐鸡翅", category: "家常菜", price: 28, tag: "", note: "甜甜的，下饭" },
-    { id: 10, name: "麻婆豆腐", category: "家常菜", price: 18, tag: "🌶️ 重辣", note: "" },
-    { id: 11, name: "蛋炒饭", category: "主食", price: 12, tag: "", note: "" },
-    { id: 12, name: "牛肉面", category: "主食", price: 22, tag: "🔥 微辣", note: "" },
-    { id: 13, name: "炸鸡", category: "小吃", price: 26, tag: "✨ 想尝尝", note: "配肥宅快乐水" },
-    { id: 14, name: "烤串", category: "小吃", price: 40, tag: "", note: "周末夜宵限定" },
-    { id: 15, name: "珍珠奶茶", category: "甜品饮品", price: 15, tag: "❤️ TA的最爱", note: "三分糖去冰" },
-    { id: 17, name: "清蒸鲈鱼", category: "家常菜", price: 48, tag: "🥗 清淡", note: "" },
-    { id: 18, name: "桑拿虫草鸡", category: "家常菜", price: 68, tag: "🥗 清淡", note: "" },
-    { id: 19, name: "鸡翅煲", category: "家常菜", price: 38, tag: "", note: "" },
-    { id: 20, name: "干煎鱼排", category: "家常菜", price: 32, tag: "", note: "" },
-    { id: 21, name: "十三香饺子", category: "主食", price: 15, tag: "", note: "" },
-    { id: 22, name: "糖醋排骨", category: "家常菜", price: 42, tag: "❤️ TA的最爱", note: "" },
-    { id: 23, name: "玉米龙骨汤", category: "汤品", price: 28, tag: "🥗 清淡", note: "" },
-    { id: 24, name: "海底椰乌鸡汤", category: "汤品", price: 32, tag: "🥗 清淡", note: "" },
+    { id: 1, name: "番茄炒蛋", category: "家常菜", price: 4, tag: "❤️ TA的最爱", note: "" },
+    { id: 2, name: "麻辣香锅", category: "家常菜", price: 5, tag: "🌶️ 重辣", note: "微辣版本更好吃" },
+    { id: 3, name: "白米饭", category: "主食", price: 1, tag: "", note: "" },
+    { id: 4, name: "杨枝甘露", category: "甜品饮品", price: 5, tag: "", note: "" },
+    { id: 5, name: "小馄饨", category: "主食", price: 3, tag: "🥗 清淡", note: "楼下那家" },
+    { id: 6, name: "薯条", category: "小吃", price: 3, tag: "✨ 想尝尝", note: "" },
+    { id: 7, name: "红烧肉", category: "家常菜", price: 5, tag: "❤️ TA的最爱", note: "肥而不腻那种" },
+    { id: 8, name: "酸菜鱼", category: "家常菜", price: 5, tag: "🔥 微辣", note: "" },
+    { id: 9, name: "可乐鸡翅", category: "家常菜", price: 4, tag: "", note: "甜甜的，下饭" },
+    { id: 10, name: "麻婆豆腐", category: "家常菜", price: 3, tag: "🌶️ 重辣", note: "" },
+    { id: 11, name: "蛋炒饭", category: "主食", price: 4, tag: "", note: "" },
+    { id: 12, name: "牛肉面", category: "主食", price: 5, tag: "🔥 微辣", note: "" },
+    { id: 13, name: "炸鸡", category: "小吃", price: 5, tag: "✨ 想尝尝", note: "配肥宅快乐水" },
+    { id: 14, name: "烤串", category: "小吃", price: 5, tag: "", note: "周末夜宵限定" },
+    { id: 15, name: "珍珠奶茶", category: "甜品饮品", price: 4, tag: "❤️ TA的最爱", note: "三分糖去冰" },
+    { id: 17, name: "清蒸鲈鱼", category: "家常菜", price: 5, tag: "🥗 清淡", note: "" },
+    { id: 18, name: "桑拿虫草鸡", category: "家常菜", price: 5, tag: "🥗 清淡", note: "" },
+    { id: 19, name: "鸡翅煲", category: "家常菜", price: 5, tag: "", note: "" },
+    { id: 20, name: "干煎鱼排", category: "家常菜", price: 4, tag: "", note: "" },
+    { id: 21, name: "十三香饺子", category: "主食", price: 3, tag: "", note: "" },
+    { id: 22, name: "糖醋排骨", category: "家常菜", price: 5, tag: "❤️ TA的最爱", note: "" },
+    { id: 23, name: "玉米龙骨汤", category: "汤品", price: 3, tag: "🥗 清淡", note: "" },
+    { id: 24, name: "海底椰乌鸡汤", category: "汤品", price: 4, tag: "🥗 清淡", note: "" },
   ];
 }
 
@@ -599,6 +599,15 @@ function load() {
               if (d.name === "清蒸鲈鱼" || d.name === "桑拿虫草鸡") d.tag = d.tag || "🥗 清淡";
               if (d.name === "糖醋排骨") d.tag = d.tag || "❤️ TA的最爱";
             }
+          });
+        }
+        // v5：所有菜价格改为 5 元以内
+        if (sVer < 5) {
+          const newPrices = {};
+          defaultDishes().forEach(d => newPrices[d.name] = d.price);
+          state.dishes.forEach(d => {
+            if (newPrices[d.name] !== undefined) d.price = newPrices[d.name];
+            else if (d.price > 5) d.price = 5;
           });
         }
         save();
