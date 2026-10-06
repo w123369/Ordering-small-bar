@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>我们的点菜本</title>
+<style>
+  :root {
+    --pink: #ff6b81;
+    --pink-light: #ffd6dd;
+    --pink-bg: #fff5f6;
+    --text: #3d2b2e;
+    --text-light: #9b8489;
+    --card: #ffffff;
+    --shadow: 0 4px 16px rgba(255, 107, 129, 0.12);
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--pink-bg);
+    color: var(--text);
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 90px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== 头部 ===== */
+  header {
+    background: linear-gradient(135deg, #ff8fab, #ff6b81);
+    padding: 20px 18px 16px;
+    color: #fff;
+    border-radius: 0 0 24px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    box-shadow: var(--shadow);
+  }
+  header .top-row { display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  header .sub { font-size: 12px; opacity: .85; margin-top: 3px; }
+  .gear-btn {
+    background: rgba(255,255,255,.2);
+    border: none; color: #fff; font-size: 18px;
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ===== Tab 栏 ===== */
+  .tabs {
+    display: flex;
+    background: #fff;
+    margin: 14px 14px 0;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .tabs button {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 12px 0;
+    font-size: 15px;
+    color: var(--text-light);
+    cursor: pointer;
+    position: relative;
+    font-weight: 500;
+  }
+  .tabs button.active { color: var(--pink); font-weight: 700; }
+  .tabs button.active::after {
+    content: "";
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    bottom: 6px;
+    width: 22px; height: 3px;
+    background: var(--pink);
+    border-radius: 3px;
+  }
+
+  .page { display: none; padding: 14px; }
+  .page.show { display: block; }
+
+  /* ===== 分类 chips ===== */
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1.5px solid #f0e0e3;
+    color: var(--text-light);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .chip.active { background: var(--pink); border-color: var(--pink); color: #fff; font-weight: 600; }
+
+  /* ===== 菜品卡片 ===== */
+  .dish-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dish-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow);
+    position: relative;
+    transition: transform .15s;
+  }
+  .dish-card:active { transform: scale(.97); }
+  .dish-card .name { font-size: 15px; font-weight: 600; line-height: 1.35; padding-right: 6px; }
+  .dish-card .price { color: var(--pink); font-size: 14px; font-weight: 700; margin-top: 6px; }
+  .dish-card .tag {
+    display: inline-block;
+    font-size: 10px;
+    background: var(--pink-light);
+    color: var(--pink);
+    padding: 2px 7px;
+    border-radius: 8px;
+    margin-top: 6px;
+  }
+  .dish-card .note { font-size: 11px; color: var(--text-light); margin-top: 5px; }
+  .add-btn {
+    position: absolute;
+    right: 12px; top: 12px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--pink);
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(255,107,129,.4);
+  }
+  .qty-badge {
+    position: absolute;
+    right: 6px; top: 4px;
+    background: var(--pink);
+    color: #fff;
+    font-size: 11px;
+    min-width: 18px; height: 18px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(255,107,129,.5);
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--text-light);
+    padding: 50px 20px;
+    font-size: 14px;
+    line-height: 2;
+  }
+  .empty .big { font-size: 40px; }
+
+  /* ===== 底部点菜栏 ===== */
+  .cart-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 448px;
+    background: var(--text);
+    color: #fff;
+    border-radius: 50px;
+    display: none;
+    align-items: center;
+    padding: 10px 12px 10px 20px;
+    box-shadow: 0 8px 24px rgba(61,43,46,.35);
+    z-index: 30;
+  }
+  .cart-bar.show { display: flex; }
+  .cart-bar .info { flex: 1; font-size: 13px; }
+  .cart-bar .info b { font-size: 16px; color: #ffd6dd; }
+  .cart-bar .go-btn {
+    background: linear-gradient(135deg, #ff8fab, #ff6b81);
+    border: none; color: #fff;
+    padding: 10px 22px;
+    border-radius: 40px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* ===== 通用弹层 ===== */
+  .mask {
+    position: fixed; inset: 0;
+    background: rgba(61,43,46,.45);
+    z-index: 40;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .mask.show { display: flex; }
+  .sheet {
+    background: #fff;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 18px 30px;
+    max-height: 82vh;
+    overflow-y: auto;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(60px); opacity: .5; } to { transform: none; opacity: 1; } }
+  .sheet h3 { font-size: 17px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .sheet .close { border: none; background: #f5eef0; color: var(--text-light); width: 28px; height: 28px; border-radius: 50%; font-size: 15px; cursor: pointer; }
+
+  .form-item { margin-bottom: 13px; }
+  .form-item label { display: block; font-size: 13px; color: var(--text-light); margin-bottom: 6px; }
+  .form-item input, .form-item select, .form-item textarea {
+    width: 100%;
+    border: 1.5px solid #f0e0e3;
+    border-radius: 12px;
+    padding: 11px 13px;
+    font-size: 15px;
+    background: #fffafa;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+  }
+  .form-item input:focus, .form-item select:focus, .form-item textarea:focus { border-color: var(--pink); }
+  .form-item textarea { resize: none; height: 70px; }
+
+  .primary-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ff8fab, #ff6b81);
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 13px;
+    border-radius: 40px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(255,107,129,.35);
+  }
+  .primary-btn:active { opacity: .88; }
+  .ghost-btn {
+    width: 100%;
+    background: none;
+    border: 1.5px solid #f0d4d9;
+    color: var(--text-light);
+    font-size: 14px;
+    padding: 11px;
+    border-radius: 40px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  /* ===== 购物车明细 ===== */
+  .cart-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed #f5e0e4;
+  }
+  .cart-item:last-of-type { border-bottom: none; }
+  .cart-item .meta { flex: 1; }
+  .cart-item .n { font-size: 15px; font-weight: 600; }
+  .cart-item .p { font-size: 12px; color: var(--text-light); margin-top: 3px; }
+  .stepper { display: flex; align-items: center; gap: 10px; }
+  .stepper button {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    font-size: 17px;
+    background: var(--pink-light);
+    color: var(--pink);
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .stepper .q { font-size: 16px; font-weight: 700; min-width: 20px; text-align: center; }
+  .cart-total {
+    display: flex; justify-content: space-between;
+    font-size: 15px;
+    padding: 14px 0 4px;
+    font-weight: 700;
+  }
+  .cart-total .money { color: var(--pink); font-size: 19px; }
+  .order-result {
+    background: #fffafa;
+    border: 1.5px dashed #f0c8cf;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 14px;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    margin-top: 14px;
+    color: var(--text);
+  }
+
+  /* ===== 抽一个 ===== */
+  .lucky-wrap { text-align: center; padding-top: 30px; }
+  .lucky-dish {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    padding: 36px 24px;
+    margin-bottom: 22px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .lucky-dish .emoji { font-size: 44px; margin-bottom: 10px; }
+  .lucky-dish .t { font-size: 22px; font-weight: 700; }
+  .lucky-dish .c { color: var(--text-light); font-size: 13px; margin-top: 8px; }
+  .lucky-dish.rolling .t { color: var(--text-light); }
+  .lucky-btn {
+    background: linear-gradient(135deg, #ff8fab, #ff6b81);
+    border: none; color: #fff;
+    font-size: 18px; font-weight: 700;
+    padding: 15px 60px;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(255,107,129,.4);
+  }
+  .lucky-btn:active { transform: scale(.96); }
+
+  /* ===== 管理 ===== */
+  .mgmt-group { margin-bottom: 16px; }
+  .mgmt-group .gt { font-size: 13px; color: var(--text-light); margin: 4px 2px 8px; font-weight: 600; }
+  .mgmt-item {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 13px 14px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .mgmt-item .meta { flex: 1; }
+  .mgmt-item .n { font-size: 15px; font-weight: 600; }
+  .mgmt-item .p { font-size: 12px; color: var(--pink); margin-top: 2px; }
+  .mgmt-item button {
+    border: none;
+    background: #f9edf0;
+    color: var(--text-light);
+    width: 30px; height: 30px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-left: 8px;
+    font-size: 13px;
+  }
+  .mgmt-item button.del { color: #e5495d; }
+  .add-dish-fixed {
+    position: fixed;
+    right: calc(50% - 240px + 18px);
+    bottom: 96px;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #ff8fab, #ff6b81);
+    color: #fff;
+    font-size: 28px;
+    box-shadow: 0 8px 20px rgba(255,107,129,.45);
+    cursor: pointer;
+    z-index: 25;
+  }
+  @media (max-width: 500px) { .add-dish-fixed { right: 18px; } }
+
+  .data-box {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-top: 18px;
+  }
+  .data-box h4 { font-size: 15px; margin-bottom: 10px; }
+  .data-box p { font-size: 12px; color: var(--text-light); line-height: 1.8; margin-bottom: 10px; }
+
+  /* toast */
+  #toast {
+    position: fixed;
+    left: 50%; top: 45%;
+    transform: translate(-50%, -50%);
+    background: rgba(61,43,46,.85);
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-size: 14px;
+    z-index: 99;
+    display: none;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-row">
+    <div>
+      <h1>我们的点菜本</h1>
+      <div class="sub" id="headerSub">今天想吃点什么呀</div>
+    </div>
+    <button class="gear-btn" onclick="openSettings()">⚙</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="active" data-page="order" onclick="switchTab('order')">🍽️ 点菜</button>
+  <button data-page="lucky" onclick="switchTab('lucky')">🎲 抽一个</button>
+  <button data-page="mgmt" onclick="switchTab('mgmt')">📖 菜单管理</button>
+</div>
+
+<!-- ============ 点菜页 ============ -->
+<div class="page show" id="page-order">
+  <div class="chips" id="chips"></div>
+  <div class="dish-grid" id="dishGrid"></div>
+  <div class="empty" id="orderEmpty" style="display:none">
+    <div class="big">🥘</div>
+    这里还空空的<br>去「菜单管理」里把爱吃的菜加进来吧
+  </div>
+</div>
+
+<!-- ============ 抽一个页 ============ -->
+<div class="page" id="page-lucky">
+  <div class="lucky-wrap">
+    <div class="lucky-dish" id="luckyCard">
+      <div class="emoji">❓</div>
+      <div class="t" id="luckyName">选择困难症救星</div>
+      <div class="c" id="luckySub">不知道吃什么的时候，交给缘分</div>
+    </div>
+    <button class="lucky-btn" id="luckyBtn" onclick="rollLucky()">开 抽 ！</button>
+    <button class="ghost-btn" style="margin-top:14px" onclick="luckyAdd()">就吃这个，加进点菜单</button>
+  </div>
+</div>
+
+<!-- ============ 管理页 ============ -->
+<div class="page" id="page-mgmt">
+  <div id="mgmtList"></div>
+  <div class="empty" id="mgmtEmpty" style="display:none">
+    <div class="big">📝</div>
+    菜单还是空的<br>点右下角 + 添加第一道菜
+  </div>
+
+  <div class="data-box">
+    <h4>💾 备份 / 换手机</h4>
+    <p>把菜单导出后发给对方（或自己另一台手机），在新的手机上导入即可，两个人的菜单就能保持一致。</p>
+    <button class="ghost-btn" style="margin:0 0 8px" onclick="exportData()">导出菜单数据</button>
+    <button class="ghost-btn" style="margin:0" onclick="importData()">导入菜单数据</button>
+  </div>
+</div>
+
+<button class="add-dish-fixed" onclick="openDishForm()">＋</button>
+
+<!-- 底部点菜栏 -->
+<div class="cart-bar" id="cartBar" onclick="openCart()">
+  <div class="info">已点 <b id="cartCount">0</b> 件 · ¥<span id="cartMoney">0</span></div>
+  <button class="go-btn">看看点了啥 →</button>
+</div>
+
+<!-- ============ 弹层：购物车 ============ -->
+<div class="mask" id="cartMask" onclick="if(event.target===this)closeMask('cartMask')">
+  <div class="sheet">
+    <h3>🛒 今天的菜 <button class="close" onclick="closeMask('cartMask')">✕</button></h3>
+    <div id="cartList"></div>
+    <div class="cart-total"><span>合计</span><span class="money">¥<span id="cartTotal">0</span></span></div>
+    <div class="form-item" style="margin-top:14px">
+      <label>想说的话 / 备注（可选）</label>
+      <textarea id="orderNote" placeholder="比如：少辣！不要香菜～"></textarea>
+    </div>
+    <button class="primary-btn" onclick="genOrder()">💌 生成点菜单，发给 TA</button>
+    <button class="ghost-btn" onclick="clearCart()">清空重选</button>
+    <div class="order-result" id="orderResult" style="display:none"></div>
+    <button class="primary-btn" style="margin-top:12px;display:none" id="copyBtn" onclick="copyOrder()">📋 一键复制</button>
+  </div>
+</div>
+
+<!-- ============ 弹层：菜品表单 ============ -->
+<div class="mask" id="dishMask" onclick="if(event.target===this)closeMask('dishMask')">
+  <div class="sheet">
+    <h3 id="dishFormTitle">添加菜品 <button class="close" onclick="closeMask('dishMask')">✕</button></h3>
+    <div class="form-item">
+      <label>菜名 *</label>
+      <input id="fName" placeholder="比如：番茄炒蛋">
+    </div>
+    <div class="form-item">
+      <label>分类</label>
+      <select id="fCategory"></select>
+    </div>
+    <div class="form-item">
+      <label>价格（元，可不填）</label>
+      <input id="fPrice" type="number" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="form-item">
+      <label>标签</label>
+      <select id="fTag">
+        <option value="">无</option>
+        <option value="❤️ TA的最爱">❤️ TA的最爱</option>
+        <option value="🔥 微辣">🔥 微辣</option>
+        <option value="🌶️ 重辣">🌶️ 重辣</option>
+        <option value="🥗 清淡">🥗 清淡</option>
+        <option value="✨ 想尝尝">✨ 想尝尝</option>
+      </select>
+    </div>
+    <div class="form-item">
+      <label>备注（可不填）</label>
+      <input id="fNote" placeholder="比如：要去对面那家买">
+    </div>
+    <button class="primary-btn" onclick="saveDish()">保 存</button>
+    <button class="ghost-btn" id="dishDelBtn" style="display:none;color:#e5495d;border-color:#f3ccd3" onclick="deleteDishForm()">删除这道菜</button>
+  </div>
+</div>
+
+<!-- ============ 弹层：设置 ============ -->
+<div class="mask" id="settingsMask" onclick="if(event.target===this)closeMask('settingsMask')">
+  <div class="sheet">
+    <h3>⚙️ 小设置 <button class="close" onclick="closeMask('settingsMask')">✕</button></h3>
+    <div class="form-item">
+      <label>点菜的人（TA的名字）</label>
+      <input id="sNameA" placeholder="比如：宝贝">
+    </div>
+    <div class="form-item">
+      <label>收菜单的人（你的名字）</label>
+      <input id="sNameB" placeholder="比如：我">
+    </div>
+    <button class="primary-btn" onclick="saveSettings()">保 存</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= 数据 ================= */
+const STORE_KEY = "diancaiben_v1";
+let state = {
+  dishes: [],
+  cart: {},          // id -> qty
+  names: { a: "宝贝", b: "我" },
+  editingId: null,
+  luckyPick: null,
+};
+
+function defaultDishes() {
+  return [
+    { id: 1, name: "番茄炒蛋", category: "家常菜", price: 12, tag: "❤️ TA的最爱", note: "" },
+    { id: 2, name: "麻辣香锅", category: "家常菜", price: 45, tag: "🌶️ 重辣", note: "微辣版本更好吃" },
+    { id: 3, name: "白米饭", category: "主食", price: 2, tag: "", note: "" },
+    { id: 4, name: "杨枝甘露", category: "甜品饮品", price: 16, tag: "", note: "" },
+    { id: 5, name: "小馄饨", category: "主食", price: 10, tag: "🥗 清淡", note: "楼下那家" },
+    { id: 6, name: "薯条", category: "小吃", price: 9, tag: "✨ 想尝尝", note: "" },
+  ];
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      state.dishes = s.dishes || [];
+      state.names = s.names || state.names;
+      state.cart = s.cart || {};
+    } else {
+      state.dishes = defaultDishes();
+    }
+  } catch (e) { state.dishes = defaultDishes(); }
+}
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify({
+    dishes: state.dishes, names: state.names, cart: state.cart
+  }));
+}
+
+/* ================= 工具 ================= */
+const $ = id => document.getElementById(id);
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.display = "none", 1800);
+}
+function openMask(id) { $(id).classList.add("show"); }
+function closeMask(id) { $(id).classList.remove("show"); }
+function categories() {
+  const set = [];
+  state.dishes.forEach(d => { if (d.category && !set.includes(d.category)) set.push(d.category); });
+  return set.length ? set : ["默认"];
+}
+let currentCat = "全部";
+function money(n) { return (Math.round(n * 100) / 100).toString().replace(/\.?0+$/, m => m.includes(".") ? "" : m); }
+
+/* ================= Tab ================= */
+function switchTab(page) {
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.page === page));
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("show"));
+  $("page-" + page).classList.add("show");
+  $("add-dish-fixed").style.display = page === "mgmt" ? "block" : "none";
+  $("cartBar").style.display = (page === "order" && cartCount() > 0) ? "flex" : "none";
+  if (page === "mgmt") renderMgmt();
+}
+
+/* ================= 点菜页 ================= */
+function renderChips() {
+  const cats = ["全部", ...categories()];
+  if (!cats.includes(currentCat)) currentCat = "全部";
+  $("chips").innerHTML = cats.map(c =>
+    `<div class="chip ${c === currentCat ? "active" : ""}" onclick="pickCat('${c}')">${c}</div>`
+  ).join("");
+}
+function pickCat(c) { currentCat = c; renderChips(); renderOrder(); }
+
+function renderOrder() {
+  const list = state.dishes.filter(d => currentCat === "全部" || d.category === currentCat);
+  $("orderEmpty").style.display = state.dishes.length ? "none" : "block";
+  $("dishGrid").innerHTML = list.map(d => {
+    const qty = state.cart[d.id] || 0;
+    return `
+      <div class="dish-card" onclick="addCart(${d.id})">
+        ${qty ? `<div class="qty-badge">${qty}</div>` : ""}
+        <div class="name">${esc(d.name)}</div>
+        ${d.price ? `<div class="price">¥${money(d.price)}</div>` : ""}
+        ${d.tag ? `<span class="tag">${d.tag}</span>` : ""}
+        ${d.note ? `<div class="note">${esc(d.note)}</div>` : ""}
+        <button class="add-btn" onclick="event.stopPropagation();addCart(${d.id})">＋</button>
+      </div>`;
+  }).join("");
+  renderCartBar();
+}
+
+function addCart(id) { state.cart[id] = (state.cart[id] || 0) + 1; save(); renderOrder(); }
+function cartCount() { return Object.values(state.cart).reduce((a, b) => a + b, 0); }
+function cartMoneyTotal() {
+  return Object.entries(state.cart).reduce((sum, [id, q]) => {
+    const d = state.dishes.find(x => x.id === +id);
+    return sum + (d && d.price ? d.price * q : 0);
+  }, 0);
+}
+function renderCartBar() {
+  const show = cartCount() > 0;
+  $("cartBar").classList.toggle("show", show);
+  if (show) {
+    $("cartCount").textContent = cartCount();
+    $("cartMoney").textContent = money(cartMoneyTotal());
+  }
+}
+
+/* ================= 购物车 ================= */
+function openCart() {
+  renderCart();
+  openMask("cartMask");
+}
+function renderCart() {
+  const items = Object.entries(state.cart)
+    .map(([id, q]) => ({ d: state.dishes.find(x => x.id === +id), q }))
+    .filter(x => x.d && x.q > 0);
+  if (!items.length) {
+    $("cartList").innerHTML = `<div style="text-align:center;color:var(--text-light);padding:30px 0">还没点菜哦～</div>`;
+    $("cartTotal").textContent = "0";
+    return;
+  }
+  $("cartList").innerHTML = items.map(({ d, q }) => `
+    <div class="cart-item">
+      <div class="meta">
+        <div class="n">${esc(d.name)} ${d.tag || ""}</div>
+        <div class="p">${d.price ? "¥" + money(d.price) + " / 份" : ""}</div>
+      </div>
+      <div class="stepper">
+        <button onclick="cartMinus(${d.id})">−</button>
+        <span class="q">${q}</span>
+        <button onclick="addCart(${d.id});renderCart()">＋</button>
+      </div>
+    </div>`).join("");
+  $("cartTotal").textContent = money(cartMoneyTotal());
+}
+function cartMinus(id) {
+  if (state.cart[id]) {
+    state.cart[id]--;
+    if (state.cart[id] <= 0) delete state.cart[id];
+    save(); renderCart(); renderOrder();
+  }
+}
+function clearCart() {
+  state.cart = {}; save(); renderCart(); renderOrder();
+  $("orderResult").style.display = "none";
+  $("copyBtn").style.display = "none";
+  toast("已清空，重新点吧～");
+}
+
+let lastOrderText = "";
+function genOrder() {
+  const items = Object.entries(state.cart)
+    .map(([id, q]) => ({ d: state.dishes.find(x => x.id === +id), q }))
+    .filter(x => x.d && x.q > 0);
+  if (!items.length) { toast("还没点菜哦～"); return; }
+  const note = $("orderNote").value.trim();
+  const hasPrice = items.some(x => x.d.price);
+  const lines = items.map((x, i) =>
+    `${i + 1}. ${x.d.name} × ${x.q}${x.d.price ? `（¥${money(x.d.price * x.q)}）` : ""}`
+  );
+  lastOrderText =
+    `${state.names.a}的点菜单 🍽️\n` +
+    lines.join("\n") + "\n" +
+    (hasPrice ? `——————\n共 ${cartCount()} 件，合计 ¥${money(cartMoneyTotal())}\n` : "") +
+    (note ? `备注：${note}\n` : "") +
+    `——${state.names.a}亲笔`;
+  $("orderResult").textContent = lastOrderText;
+  $("orderResult").style.display = "block";
+  $("copyBtn").style.display = "block";
+  copyOrder(true);
+}
+function copyOrder(silent) {
+  const done = () => { if (!silent) toast("已复制，快去发给TA吧 💌"); else toast("已自动复制，粘贴发出去就行 💌"); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lastOrderText).then(done).catch(() => fallbackCopy(done));
+  } else fallbackCopy(done);
+}
+function fallbackCopy(done) {
+  const ta = document.createElement("textarea");
+  ta.value = lastOrderText;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); done(); } catch (e) { toast("复制失败，长按文字手动复制吧"); }
+  document.body.removeChild(ta);
+}
+
+/* ================= 抽一个 ================= */
+const EMOJIS = ["🍲", "🍜", "🥘", "🍱", "🍣", "🥟", "🍗", "🍤", "🧋", "🍰"];
+let rolling = false;
+function rollLucky() {
+  if (!state.dishes.length) { toast("先去添加几道菜吧～"); return; }
+  if (rolling) return;
+  rolling = true;
+  $("luckyBtn").textContent = "抽取中…";
+  const card = $("luckyCard");
+  card.classList.add("rolling");
+  let times = 0;
+  const timer = setInterval(() => {
+    const d = state.dishes[Math.floor(Math.random() * state.dishes.length)];
+    $("luckyCard").querySelector(".emoji").textContent = EMOJIS[times % EMOJIS.length];
+    $("luckyName").textContent = d.name;
+    $("luckySub").textContent = "…";
+    times++;
+    if (times > 14) {
+      clearInterval(timer);
+      const pick = state.dishes[Math.floor(Math.random() * state.dishes.length)];
+      state.luckyPick = pick.id;
+      $("luckyCard").querySelector(".emoji").textContent = "✨";
+      $("luckyName").textContent = pick.name;
+      $("luckySub").textContent = (pick.tag ? pick.tag + " · " : "") + (pick.category || "") + " —— 就是它了！";
+      card.classList.remove("rolling");
+      $("luckyBtn").textContent = "不满意？再来！";
+      rolling = false;
+    }
+  }, 90);
+}
+function luckyAdd() {
+  if (!state.luckyPick) { toast("先抽一个再决定嘛～"); return; }
+  addCart(state.luckyPick);
+  toast(`已把「${state.dishes.find(d => d.id === state.luckyPick).name}」加进点菜单`);
+}
+
+/* ================= 管理页 ================= */
+function renderMgmt() {
+  const cats = categories();
+  $("mgmtEmpty").style.display = state.dishes.length ? "none" : "block";
+  $("mgmtList").innerHTML = cats.map(c => {
+    const list = state.dishes.filter(d => (d.category || "默认") === c);
+    return `
+      <div class="mgmt-group">
+        <div class="gt">${c}</div>
+        ${list.map(d => `
+          <div class="mgmt-item">
+            <div class="meta">
+              <div class="n">${esc(d.name)} ${d.tag || ""}</div>
+              <div class="p">${d.price ? "¥" + money(d.price) : "未填价格"}</div>
+            </div>
+            <button onclick="openDishForm(${d.id})">✏️</button>
+            <button class="del" onclick="quickDel(${d.id})">🗑</button>
+          </div>`).join("")}
+      </div>`;
+  }).join("");
+}
+function quickDel(id) {
+  const d = state.dishes.find(x => x.id === id);
+  if (d && confirm(`确定删除「${d.name}」吗？`)) {
+    state.dishes = state.dishes.filter(x => x.id !== id);
+    delete state.cart[id];
+    save(); renderMgmt(); renderOrder();
+  }
+}
+function openDishForm(id) {
+  state.editingId = id || null;
+  const cats = categories();
+  const cSel = $("fCategory");
+  cSel.innerHTML = cats.map(c => `<option>${c}</option>`).join("") +
+    `<option value="__new__">➕ 新建分类…</option>`;
+  if (id) {
+    const d = state.dishes.find(x => x.id === id);
+    $("dishFormTitle").innerHTML = `编辑菜品 <button class="close" onclick="closeMask('dishMask')">✕</button>`;
+    $("fName").value = d.name;
+    if (cats.includes(d.category)) cSel.value = d.category;
+    $("fPrice").value = d.price || "";
+    $("fTag").value = d.tag || "";
+    $("fNote").value = d.note || "";
+    $("dishDelBtn").style.display = "block";
+  } else {
+    $("dishFormTitle").innerHTML = `添加菜品 <button class="close" onclick="closeMask('dishMask')">✕</button>`;
+    $("fName").value = ""; $("fPrice").value = ""; $("fTag").value = ""; $("fNote").value = "";
+    $("dishDelBtn").style.display = "none";
+  }
+  openMask("dishMask");
+}
+function saveDish() {
+  const name = $("fName").value.trim();
+  if (!name) { toast("菜名还没写呢"); return; }
+  let category = $("fCategory").value;
+  if (category === "__new__") {
+    category = prompt("新分类叫什么？").trim();
+    if (!category) return;
+  }
+  const price = parseFloat($("fPrice").value) || 0;
+  const data = { name, category, price, tag: $("fTag").value, note: $("fNote").value.trim() };
+  if (state.editingId) {
+    Object.assign(state.dishes.find(x => x.id === state.editingId), data);
+  } else {
+    data.id = Date.now();
+    state.dishes.push(data);
+  }
+  save(); closeMask("dishMask");
+  renderOrder(); renderChips();
+  if ($("page-mgmt").classList.contains("show")) renderMgmt();
+  toast("保存好了 ✔");
+}
+function deleteDishForm() {
+  if (state.editingId && confirm("确定删除这道菜？")) {
+    quickDel(state.editingId);
+    closeMask("dishMask");
+  }
+}
+
+/* ================= 导出导入 ================= */
+function exportData() {
+  const text = JSON.stringify({ dishes: state.dishes, names: state.names });
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(
+      () => toast("已复制到剪贴板，微信发给自己/TA即可"),
+      () => showExportBox(text)
+    );
+  } else showExportBox(text);
+}
+function showExportBox(text) {
+  const w = window.open("", "_blank");
+  if (w) { w.document.title = "点菜本数据"; w.document.body.style.whiteSpace = "pre-wrap"; w.document.body.textContent = text; }
+  else prompt("复制下面的数据：", text);
+}
+function importData() {
+  const text = prompt("把对方发来的数据粘贴到这里：");
+  if (!text) return;
+  try {
+    const obj = JSON.parse(text.trim());
+    if (!Array.isArray(obj.dishes)) throw 0;
+    const existIds = new Set(state.dishes.map(d => d.name + "|" + d.category));
+    let added = 0;
+    obj.dishes.forEach(d => {
+      if (!existIds.has(d.name + "|" + d.category)) { state.dishes.push({ ...d, id: Date.now() + Math.random() }); added++; }
+    });
+    if (obj.names && obj.names.a) state.names = obj.names;
+    save(); renderOrder(); renderChips(); renderMgmt();
+    toast(`导入成功，新增 ${added} 道菜`);
+  } catch (e) { toast("数据格式不对，检查一下再试"); }
+}
+
+/* ================= 设置 ================= */
+function openSettings() {
+  $("sNameA").value = state.names.a;
+  $("sNameB").value = state.names.b;
+  openMask("settingsMask");
+}
+function saveSettings() {
+  state.names.a = $("sNameA").value.trim() || "宝贝";
+  state.names.b = $("sNameB").value.trim() || "我";
+  save(); closeMask("settingsMask");
+  updateHeader();
+  toast("改好啦 ✔");
+}
+function updateHeader() {
+  $("headerSub").textContent = `${state.names.a} 点菜，${state.names.b} 接单`;
+}
+
+/* ================= XSS 转义 ================= */
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/* ================= 启动 ================= */
+load();
+updateHeader();
+renderChips();
+renderOrder();
+switchTab("order");
+</script>
+</body>
+</html>
