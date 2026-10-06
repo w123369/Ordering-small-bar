@@ -532,6 +532,7 @@
 <script>
 /* ================= 数据 ================= */
 const STORE_KEY = "diancaiben_v1";
+const DEFAULT_MENU_VERSION = 3; // 每次改动默认菜单就 +1，老用户刷新后自动同步增删
 let state = {
   dishes: [],
   cart: {},          // id -> qty
@@ -557,7 +558,14 @@ function defaultDishes() {
     { id: 13, name: "炸鸡", category: "小吃", price: 26, tag: "✨ 想尝尝", note: "配肥宅快乐水" },
     { id: 14, name: "烤串", category: "小吃", price: 40, tag: "", note: "周末夜宵限定" },
     { id: 15, name: "珍珠奶茶", category: "甜品饮品", price: 15, tag: "❤️ TA的最爱", note: "三分糖去冰" },
-    { id: 16, name: "提拉米苏", category: "甜品饮品", price: 24, tag: "", note: "" },
+    { id: 17, name: "清蒸鲈鱼", category: "家常菜", price: 0, tag: "", note: "" },
+    { id: 18, name: "桑拿虫草鸡", category: "家常菜", price: 0, tag: "", note: "" },
+    { id: 19, name: "鸡翅煲", category: "家常菜", price: 0, tag: "", note: "" },
+    { id: 20, name: "干煎鱼排", category: "家常菜", price: 0, tag: "", note: "" },
+    { id: 21, name: "十三香饺子", category: "主食", price: 0, tag: "", note: "" },
+    { id: 22, name: "糖醋排骨", category: "家常菜", price: 0, tag: "", note: "" },
+    { id: 23, name: "玉米龙骨汤", category: "汤品", price: 0, tag: "🥗 清淡", note: "" },
+    { id: 24, name: "海底椰乌鸡汤", category: "汤品", price: 0, tag: "🥗 清淡", note: "" },
   ];
 }
 
@@ -571,17 +579,19 @@ function load() {
       // 老版本存的默认昵称"宝贝"自动升级为"黄凯悦"
       if (state.names.a === "宝贝") state.names.a = "黄凯悦";
       state.cart = s.cart || {};
-      // 已有菜单的老用户：把新版本默认菜自动补进来（自己加过的不会重复）
-      const newDefaults = defaultDishes().filter(d => d.id >= 7);
-      const existNames = new Set(state.dishes.map(d => d.name));
-      let merged = false;
-      newDefaults.forEach(d => {
-        if (!existNames.has(d.name)) {
-          state.dishes.push({ ...d, id: Date.now() + Math.floor(Math.random() * 100000) });
-          merged = true;
-        }
-      });
-      if (merged) save();
+      // 菜单版本升级：把新版本默认菜补进来（自己加过的不会重复），移除下架的默认菜
+      const sVer = s.defaultMenuVersion || 1;
+      if (sVer < DEFAULT_MENU_VERSION) {
+        const existNames = new Set(state.dishes.map(d => d.name));
+        defaultDishes().forEach(d => {
+          if (d.id >= 7 && !existNames.has(d.name)) {
+            state.dishes.push({ ...d, id: Date.now() + Math.floor(Math.random() * 100000) });
+          }
+        });
+        // v3：下架提拉米苏
+        state.dishes = state.dishes.filter(d => d.name !== "提拉米苏");
+        save();
+      }
     } else {
       state.dishes = defaultDishes();
     }
@@ -589,7 +599,7 @@ function load() {
 }
 function save() {
   localStorage.setItem(STORE_KEY, JSON.stringify({
-    dishes: state.dishes, names: state.names, cart: state.cart
+    dishes: state.dishes, names: state.names, cart: state.cart, defaultMenuVersion: DEFAULT_MENU_VERSION
   }));
 }
 
