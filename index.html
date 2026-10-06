@@ -517,7 +517,7 @@
     <h3>⚙️ 小设置 <button class="close" onclick="closeMask('settingsMask')">✕</button></h3>
     <div class="form-item">
       <label>点菜的人（TA的名字）</label>
-      <input id="sNameA" placeholder="比如：宝贝">
+      <input id="sNameA" placeholder="黄凯悦">
     </div>
     <div class="form-item">
       <label>收菜单的人（你的名字）</label>
@@ -535,7 +535,7 @@ const STORE_KEY = "diancaiben_v1";
 let state = {
   dishes: [],
   cart: {},          // id -> qty
-  names: { a: "宝贝", b: "我" },
+  names: { a: "黄凯悦", b: "我" },
   editingId: null,
   luckyPick: null,
 };
@@ -558,6 +558,8 @@ function load() {
       const s = JSON.parse(raw);
       state.dishes = s.dishes || [];
       state.names = s.names || state.names;
+      // 老版本存的默认昵称"宝贝"自动升级为"黄凯悦"
+      if (state.names.a === "宝贝") state.names.a = "黄凯悦";
       state.cart = s.cart || {};
     } else {
       state.dishes = defaultDishes();
@@ -877,7 +879,7 @@ function openSettings() {
   openMask("settingsMask");
 }
 function saveSettings() {
-  state.names.a = $("sNameA").value.trim() || "宝贝";
+  state.names.a = $("sNameA").value.trim() || "黄凯悦";
   state.names.b = $("sNameB").value.trim() || "我";
   save(); closeMask("settingsMask");
   updateHeader();
