@@ -532,7 +532,7 @@
 <script>
 /* ================= 数据 ================= */
 const STORE_KEY = "diancaiben_v1";
-const DEFAULT_MENU_VERSION = 3; // 每次改动默认菜单就 +1，老用户刷新后自动同步增删
+const DEFAULT_MENU_VERSION = 4; // 每次改动默认菜单就 +1，老用户刷新后自动同步增删
 let state = {
   dishes: [],
   cart: {},          // id -> qty
@@ -558,14 +558,14 @@ function defaultDishes() {
     { id: 13, name: "炸鸡", category: "小吃", price: 26, tag: "✨ 想尝尝", note: "配肥宅快乐水" },
     { id: 14, name: "烤串", category: "小吃", price: 40, tag: "", note: "周末夜宵限定" },
     { id: 15, name: "珍珠奶茶", category: "甜品饮品", price: 15, tag: "❤️ TA的最爱", note: "三分糖去冰" },
-    { id: 17, name: "清蒸鲈鱼", category: "家常菜", price: 0, tag: "", note: "" },
-    { id: 18, name: "桑拿虫草鸡", category: "家常菜", price: 0, tag: "", note: "" },
-    { id: 19, name: "鸡翅煲", category: "家常菜", price: 0, tag: "", note: "" },
-    { id: 20, name: "干煎鱼排", category: "家常菜", price: 0, tag: "", note: "" },
-    { id: 21, name: "十三香饺子", category: "主食", price: 0, tag: "", note: "" },
-    { id: 22, name: "糖醋排骨", category: "家常菜", price: 0, tag: "", note: "" },
-    { id: 23, name: "玉米龙骨汤", category: "汤品", price: 0, tag: "🥗 清淡", note: "" },
-    { id: 24, name: "海底椰乌鸡汤", category: "汤品", price: 0, tag: "🥗 清淡", note: "" },
+    { id: 17, name: "清蒸鲈鱼", category: "家常菜", price: 48, tag: "🥗 清淡", note: "" },
+    { id: 18, name: "桑拿虫草鸡", category: "家常菜", price: 68, tag: "🥗 清淡", note: "" },
+    { id: 19, name: "鸡翅煲", category: "家常菜", price: 38, tag: "", note: "" },
+    { id: 20, name: "干煎鱼排", category: "家常菜", price: 32, tag: "", note: "" },
+    { id: 21, name: "十三香饺子", category: "主食", price: 15, tag: "", note: "" },
+    { id: 22, name: "糖醋排骨", category: "家常菜", price: 42, tag: "❤️ TA的最爱", note: "" },
+    { id: 23, name: "玉米龙骨汤", category: "汤品", price: 28, tag: "🥗 清淡", note: "" },
+    { id: 24, name: "海底椰乌鸡汤", category: "汤品", price: 32, tag: "🥗 清淡", note: "" },
   ];
 }
 
@@ -590,6 +590,17 @@ function load() {
         });
         // v3：下架提拉米苏
         state.dishes = state.dishes.filter(d => d.name !== "提拉米苏");
+        // v4：给没填价格的新菜补上参考价（用户自己改过价格的不会覆盖）
+        if (sVer < 4) {
+          const priceMap = { "清蒸鲈鱼": 48, "桑拿虫草鸡": 68, "鸡翅煲": 38, "干煎鱼排": 32, "十三香饺子": 15, "糖醋排骨": 42, "玉米龙骨汤": 28, "海底椰乌鸡汤": 32 };
+          state.dishes.forEach(d => {
+            if (priceMap[d.name] && !d.price) {
+              d.price = priceMap[d.name];
+              if (d.name === "清蒸鲈鱼" || d.name === "桑拿虫草鸡") d.tag = d.tag || "🥗 清淡";
+              if (d.name === "糖醋排骨") d.tag = d.tag || "❤️ TA的最爱";
+            }
+          });
+        }
         save();
       }
     } else {
