@@ -123,6 +123,17 @@
     margin-top: 6px;
   }
   .dish-card .note { font-size: 11px; color: var(--text-light); margin-top: 5px; }
+  .img-wrap {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffe3e8, #ffd6dd);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 9px;
+  }
+  .img-wrap .ph-emoji { font-size: 32px; opacity: .75; }
+  .img-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .add-btn {
     position: absolute;
     right: 12px; top: 12px;
@@ -310,6 +321,16 @@
     align-items: center;
     justify-content: center;
   }
+  .lucky-img {
+    width: 160px; height: 160px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffe3e8, #ffd6dd);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px;
+    margin-bottom: 14px;
+  }
+  .lucky-img img { width: 100%; height: 100%; object-fit: cover; }
   .lucky-dish .emoji { font-size: 44px; margin-bottom: 10px; }
   .lucky-dish .t { font-size: 22px; font-weight: 700; }
   .lucky-dish .c { color: var(--text-light); font-size: 13px; margin-top: 8px; }
@@ -425,7 +446,7 @@
 <div class="page" id="page-lucky">
   <div class="lucky-wrap">
     <div class="lucky-dish" id="luckyCard">
-      <div class="emoji">❓</div>
+      <div class="lucky-img" id="luckyImgWrap"><span id="luckyEmoji">❓</span></div>
       <div class="t" id="luckyName">选择困难症救星</div>
       <div class="c" id="luckySub">不知道吃什么的时候，交给缘分</div>
     </div>
@@ -667,6 +688,19 @@ function renderChips() {
 }
 function pickCat(c) { currentCat = c; renderChips(); renderOrder(); }
 
+/* ================= 菜品配图 ================= */
+function defaultImgId(name) {
+  const d = defaultDishes().find(x => x.name === name);
+  return d ? d.id : null;
+}
+const CAT_EMOJI = { "家常菜": "🍲", "主食": "🍚", "小吃": "🍟", "甜品饮品": "🧋", "汤品": "🥣" };
+function catEmoji(cat) { return CAT_EMOJI[cat] || "🍽️"; }
+function dishImgHtml(name, cat) {
+  const imgId = defaultImgId(name);
+  const ph = `<span class="ph-emoji">${catEmoji(cat)}</span>`;
+  return `<div class="img-wrap">${ph}${imgId ? `<img loading="lazy" src="images/${imgId}.png" alt="${esc(name)}" onerror="this.remove()">` : ""}</div>`;
+}
+
 function renderOrder() {
   const list = state.dishes.filter(d => currentCat === "全部" || d.category === currentCat);
   $("orderEmpty").style.display = state.dishes.length ? "none" : "block";
@@ -675,6 +709,7 @@ function renderOrder() {
     return `
       <div class="dish-card" onclick="addCart(${d.id})">
         ${qty ? `<div class="qty-badge">${qty}</div>` : ""}
+        ${dishImgHtml(d.name, d.category)}
         <div class="name">${esc(d.name)}</div>
         ${d.price ? `<div class="price">¥${money(d.price)}</div>` : ""}
         ${d.tag ? `<span class="tag">${d.tag}</span>` : ""}
@@ -787,6 +822,17 @@ function fallbackCopy(done) {
 /* ================= 抽一个 ================= */
 const EMOJIS = ["🍲", "🍜", "🥘", "🍱", "🍣", "🥟", "🍗", "🍤", "🧋", "🍰"];
 let rolling = false;
+function setLuckyImg(name, cat, rollingEmoji) {
+  const wrap = $("luckyImgWrap");
+  const imgId = defaultImgId(name);
+  if (rollingEmoji) {
+    wrap.innerHTML = `<span>${rollingEmoji}</span>`;
+  } else if (imgId) {
+    wrap.innerHTML = `<img src="images/${imgId}.png" alt="${esc(name)}" onerror="this.remove()">`;
+  } else {
+    wrap.innerHTML = `<span>${catEmoji(cat)}</span>`;
+  }
+}
 function rollLucky() {
   if (!state.dishes.length) { toast("先去添加几道菜吧～"); return; }
   if (rolling) return;
@@ -797,7 +843,7 @@ function rollLucky() {
   let times = 0;
   const timer = setInterval(() => {
     const d = state.dishes[Math.floor(Math.random() * state.dishes.length)];
-    $("luckyCard").querySelector(".emoji").textContent = EMOJIS[times % EMOJIS.length];
+    setLuckyImg(d.name, d.category, EMOJIS[times % EMOJIS.length]);
     $("luckyName").textContent = d.name;
     $("luckySub").textContent = "…";
     times++;
@@ -805,7 +851,7 @@ function rollLucky() {
       clearInterval(timer);
       const pick = state.dishes[Math.floor(Math.random() * state.dishes.length)];
       state.luckyPick = pick.id;
-      $("luckyCard").querySelector(".emoji").textContent = "✨";
+      setLuckyImg(pick.name, pick.category);
       $("luckyName").textContent = pick.name;
       $("luckySub").textContent = (pick.tag ? pick.tag + " · " : "") + (pick.category || "") + " —— 就是它了！";
       card.classList.remove("rolling");
