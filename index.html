@@ -548,6 +548,16 @@ function defaultDishes() {
     { id: 4, name: "杨枝甘露", category: "甜品饮品", price: 16, tag: "", note: "" },
     { id: 5, name: "小馄饨", category: "主食", price: 10, tag: "🥗 清淡", note: "楼下那家" },
     { id: 6, name: "薯条", category: "小吃", price: 9, tag: "✨ 想尝尝", note: "" },
+    { id: 7, name: "红烧肉", category: "家常菜", price: 38, tag: "❤️ TA的最爱", note: "肥而不腻那种" },
+    { id: 8, name: "酸菜鱼", category: "家常菜", price: 52, tag: "🔥 微辣", note: "" },
+    { id: 9, name: "可乐鸡翅", category: "家常菜", price: 28, tag: "", note: "甜甜的，下饭" },
+    { id: 10, name: "麻婆豆腐", category: "家常菜", price: 18, tag: "🌶️ 重辣", note: "" },
+    { id: 11, name: "蛋炒饭", category: "主食", price: 12, tag: "", note: "" },
+    { id: 12, name: "牛肉面", category: "主食", price: 22, tag: "🔥 微辣", note: "" },
+    { id: 13, name: "炸鸡", category: "小吃", price: 26, tag: "✨ 想尝尝", note: "配肥宅快乐水" },
+    { id: 14, name: "烤串", category: "小吃", price: 40, tag: "", note: "周末夜宵限定" },
+    { id: 15, name: "珍珠奶茶", category: "甜品饮品", price: 15, tag: "❤️ TA的最爱", note: "三分糖去冰" },
+    { id: 16, name: "提拉米苏", category: "甜品饮品", price: 24, tag: "", note: "" },
   ];
 }
 
@@ -561,6 +571,17 @@ function load() {
       // 老版本存的默认昵称"宝贝"自动升级为"黄凯悦"
       if (state.names.a === "宝贝") state.names.a = "黄凯悦";
       state.cart = s.cart || {};
+      // 已有菜单的老用户：把新版本默认菜自动补进来（自己加过的不会重复）
+      const newDefaults = defaultDishes().filter(d => d.id >= 7);
+      const existNames = new Set(state.dishes.map(d => d.name));
+      let merged = false;
+      newDefaults.forEach(d => {
+        if (!existNames.has(d.name)) {
+          state.dishes.push({ ...d, id: Date.now() + Math.floor(Math.random() * 100000) });
+          merged = true;
+        }
+      });
+      if (merged) save();
     } else {
       state.dishes = defaultDishes();
     }
