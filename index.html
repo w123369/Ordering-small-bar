@@ -454,7 +454,7 @@
 
 <!-- 底部点菜栏 -->
 <div class="cart-bar" id="cartBar" onclick="openCart()">
-  <div class="info">已点 <b id="cartCount">0</b> 件 · ¥<span id="cartMoney">0</span></div>
+  <div class="info">已点 <b id="cartCount">0</b> 件<span id="cartMoneyWrap"> · ¥<span id="cartMoney">0</span></span></div>
   <button class="go-btn">看看点了啥 →</button>
 </div>
 
@@ -463,7 +463,7 @@
   <div class="sheet">
     <h3>🛒 今天的菜 <button class="close" onclick="closeMask('cartMask')">✕</button></h3>
     <div id="cartList"></div>
-    <div class="cart-total"><span>合计</span><span class="money">¥<span id="cartTotal">0</span></span></div>
+    <div class="cart-total" id="cartTotalRow"><span>合计</span><span class="money">¥<span id="cartTotal">0</span></span></div>
     <div class="form-item" style="margin-top:14px">
       <label>想说的话 / 备注（可选）</label>
       <textarea id="orderNote" placeholder="比如：少辣！不要香菜～"></textarea>
@@ -532,7 +532,7 @@
 <script>
 /* ================= 数据 ================= */
 const STORE_KEY = "diancaiben_v1";
-const DEFAULT_MENU_VERSION = 5; // 每次改动默认菜单就 +1，老用户刷新后自动同步增删
+const DEFAULT_MENU_VERSION = 6; // 每次改动默认菜单就 +1，老用户刷新后自动同步增删
 let state = {
   dishes: [],
   cart: {},          // id -> qty
@@ -542,6 +542,7 @@ let state = {
 };
 
 function defaultDishes() {
+  // v6：全部免费（价格归零后界面不再显示价格与合计；原价目保留在下方数据里，随时可恢复）
   return [
     { id: 1, name: "番茄炒蛋", category: "家常菜", price: 4, tag: "❤️ TA的最爱", note: "" },
     { id: 2, name: "麻辣香锅", category: "家常菜", price: 5, tag: "🌶️ 重辣", note: "微辣版本更好吃" },
@@ -566,7 +567,7 @@ function defaultDishes() {
     { id: 22, name: "糖醋排骨", category: "家常菜", price: 5, tag: "❤️ TA的最爱", note: "" },
     { id: 23, name: "玉米龙骨汤", category: "汤品", price: 3, tag: "🥗 清淡", note: "" },
     { id: 24, name: "海底椰乌鸡汤", category: "汤品", price: 4, tag: "🥗 清淡", note: "" },
-  ];
+  ].map(d => ({ ...d, price: 0 }));
 }
 
 function load() {
@@ -609,6 +610,10 @@ function load() {
             if (newPrices[d.name] !== undefined) d.price = newPrices[d.name];
             else if (d.price > 5) d.price = 5;
           });
+        }
+        // v6：全部免费，价格归零
+        if (sVer < 6) {
+          state.dishes.forEach(d => { d.price = 0; });
         }
         save();
       }
@@ -694,6 +699,7 @@ function renderCartBar() {
   if (show) {
     $("cartCount").textContent = cartCount();
     $("cartMoney").textContent = money(cartMoneyTotal());
+    $("cartMoneyWrap").style.display = cartMoneyTotal() > 0 ? "inline" : "none";
   }
 }
 
@@ -709,6 +715,7 @@ function renderCart() {
   if (!items.length) {
     $("cartList").innerHTML = `<div style="text-align:center;color:var(--text-light);padding:30px 0">还没点菜哦～</div>`;
     $("cartTotal").textContent = "0";
+    $("cartTotalRow").style.display = "none";
     return;
   }
   $("cartList").innerHTML = items.map(({ d, q }) => `
@@ -724,6 +731,7 @@ function renderCart() {
       </div>
     </div>`).join("");
   $("cartTotal").textContent = money(cartMoneyTotal());
+  $("cartTotalRow").style.display = cartMoneyTotal() > 0 ? "flex" : "none";
 }
 function cartMinus(id) {
   if (state.cart[id]) {
@@ -825,7 +833,7 @@ function renderMgmt() {
           <div class="mgmt-item">
             <div class="meta">
               <div class="n">${esc(d.name)} ${d.tag || ""}</div>
-              <div class="p">${d.price ? "¥" + money(d.price) : "未填价格"}</div>
+              <div class="p">${d.price ? "¥" + money(d.price) : "免费"}</div>
             </div>
             <button onclick="openDishForm(${d.id})">✏️</button>
             <button class="del" onclick="quickDel(${d.id})">🗑</button>
